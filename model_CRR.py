@@ -1,6 +1,7 @@
 import math
 import scipy.special as sc
-from decimal import Decimal
+from decimal import Decimal, getcontext
+getcontext().prec = 2
 
 
 class Model_CRR(object):
