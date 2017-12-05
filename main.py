@@ -2,14 +2,10 @@ import math
 import sys
 
 
-import scipy.special as sc
-
-
 import main_window as mw
 
 
-from decimal import Decimal, getcontext
-getcontext().prec = 2
+from decimal import Decimal
 
 
 from PyQt5.QtGui import *
@@ -32,6 +28,10 @@ class Model_CRR(object):
         self._BN = self._B0 * Decimal(math.pow(1.0 + r, N))
         self._BN_inv = 1.0 / float(self._BN)
         self._n, self._Sn_prev = 1, self._S0
+
+    @staticmethod
+    def _Ckn(k, n):
+        return math.factorial(n) / (math.factorial(n - k) * math.factorial(k))
 
     def _calc_K0(self):
         K, S0 = float(self._K), float(self._S0)
@@ -63,7 +63,7 @@ class Model_CRR(object):
         a, b, p = self._a, self._b, self._p
         q, a_1, b_1 = 1 - p, 1 + a, 1 + b
         x_ = X * Decimal(math.pow(a_1, n - k) * math.pow(b_1, k))
-        binom = Decimal(sc.perm(n, k) * math.pow(p, k) * math.pow(q, n - k))
+        binom = Decimal(self._Ckn(k, n) * math.pow(p, k) * math.pow(q, n - k))
         return self._fun(x_) * binom
 
     def _fun(self, X):
@@ -138,14 +138,7 @@ class Form(QMainWindow, mw.Ui_MainWindow):
         a = self.a
         a.calc_gamma_n()
         a.calc_beta_n()
-        self.lineEdit.setText(str(a._a))
-        self.lineEdit_2.setText(str(a._b))
-        self.lineEdit_3.setText(str(a._r))
-        self.lineEdit_4.setText(str(a._B0))
-        self.lineEdit_5.setText(str(a._S0))
-        self.lineEdit_6.setText(str(a._K))
-        self.lineEdit_7.setText(str(a._N))
-        self.lineEdit_8.setText(str(int(a._CN)))
+        self.settext_lineedit_a_b_r_B0_S0_K_N_CN()
         self.update_beta_gamma()
         self.check_start()
 
@@ -161,6 +154,12 @@ class Form(QMainWindow, mw.Ui_MainWindow):
         a = self.a
         a.calc_gamma_n()
         a.calc_beta_n()
+        self.settext_lineedit_a_b_r_B0_S0_K_N_CN()
+        self.update_beta_gamma()
+        self.check_start()
+
+    def settext_lineedit_a_b_r_B0_S0_K_N_CN(self):
+        a = self.a
         self.lineEdit.setText(str(a._a))
         self.lineEdit_2.setText(str(a._b))
         self.lineEdit_3.setText(str(a._r))
@@ -168,9 +167,7 @@ class Form(QMainWindow, mw.Ui_MainWindow):
         self.lineEdit_5.setText(str(a._S0))
         self.lineEdit_6.setText(str(a._K))
         self.lineEdit_7.setText(str(a._N))
-        self.lineEdit_8.setText(str(int(a._CN)))
-        self.update_beta_gamma()
-        self.check_start()
+        self.lineEdit_8.setText(str(round(float(a._CN), 4)))
 
     def input_dialog_get_r_a_b(self, x: str, l=-1.0, h=1.0):
         num, ok = QInputDialog.getDouble(
