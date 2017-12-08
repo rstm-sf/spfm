@@ -89,7 +89,6 @@ class Model_CRR(Base_model_CRR):
             return
         N, n, Sn_prev, F = self._N, self._n, self._Sn_prev, self._calc_F
         k, a, b, r = N - n, self._a, self._b, self._r
-        print(k)
         self._gamma_n = math.pow(1.0 / (1.0 + self._r), k) * float(
             F(Sn_prev * Decimal(1.0 + b), k) - F(Sn_prev * Decimal(1.0 + a), k)
         ) / (float(Sn_prev) * (b - a))
@@ -104,10 +103,6 @@ class Model_CRR(Base_model_CRR):
             float(F(Sn_prev * Decimal(1.0 + b), k) -
                   F(Sn_prev * Decimal(1.0 + a), k))
         )
-
-    def calc_capital(self):
-        return Decimal(self._beta_n) * self._B0 +\
-            Decimal(self._gamma_n) * self._S0
 
 
 class Start_Form(QMainWindow, sw.Ui_StartWindow):
@@ -313,12 +308,15 @@ class Main_Form(QMainWindow, mw.Ui_MainWindow):
         self.lineEdit_16.setText(str(a._K0))
 
     def check_start(self):
-        if self.a._n <= self.a._N and \
-        self.a.calc_capital() != Decimal(0.0) and self.a._K0 <= self.a._N:
+        if self.a._n <= self.a._N and self.a._K0 <= self.a._N and (
+            abs(self.a._beta_n) >= float(1e-31) or \
+            abs(self.a._gamma_n) >= float(1e-31)
+        ):
             self.button_up_down_connect()
 
     def check_end(self):
-        if self.a._n > self.a._N or self.a.calc_capital() == Decimal(0.0):
+        if self.a._n > self.a._N or abs(self.a._beta_n) < float(1e-31) and \
+                abs(self.a._gamma_n) < float(1e-31):
             self.button_up_down_disconnect()
 
     def button_up_down_connect(self):
