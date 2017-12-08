@@ -14,7 +14,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
 
-class Model_CRR(object):
+class Base_model_CRR():
     def __init__(self, r, a, b, B0, S0, K, N):
         self._r = r
         self._a = a
@@ -23,6 +23,14 @@ class Model_CRR(object):
         self._S0 = Decimal(S0)
         self._K = Decimal(K)
         self._N = N
+
+    def get_r_a_b_B0_S0_K_N(self):
+        return self._r, self._a, self._b, self._B0, self._S0, self._K, self._N
+
+
+class Model_CRR(Base_model_CRR):
+    def __init__(self, r, a, b, B0, S0, K, N):
+        super().__init__(r, a, b, B0, S0, K, N)
         self._p = (r - a) / (b - a)
         self._calc_K0()
         self._calc_CN()
@@ -77,13 +85,18 @@ class Model_CRR(object):
         self._Sn_prev *= Decimal(1.0 + rho)
 
     def calc_gamma_n(self):
+        if self._n > self._N:
+            return
         N, n, Sn_prev, F = self._N, self._n, self._Sn_prev, self._calc_F
         k, a, b, r = N - n, self._a, self._b, self._r
+        print(k)
         self._gamma_n = math.pow(1.0 / (1.0 + self._r), k) * float(
             F(Sn_prev * Decimal(1.0 + b), k) - F(Sn_prev * Decimal(1.0 + a), k)
         ) / (float(Sn_prev) * (b - a))
 
     def calc_beta_n(self):
+        if self._n > self._N:
+            return
         N, n, Sn_prev, F = self._N, self._n, self._Sn_prev, self._calc_F
         k, a, b, r = N - n, self._a, self._b, self._r
         self._beta_n = self._BN_inv * (
@@ -111,12 +124,11 @@ class Start_Form(QMainWindow, sw.Ui_StartWindow):
         self.pushButton_11.clicked.connect(self.button_change_K)
         self.pushButton_12.clicked.connect(self.button_change_N)
         self.pushButton_4.clicked.connect(self.calculate)
-        self.main_window = None
 
     def test_input(self):
         ''' (beta, gamma) = (-30, 1 / 3)
         Ширяев А. Н. Основы стохастической финансовой математики'''
-        self.a = Model_CRR(0, -2 / 5, 1 / 5, 1, 150, 150, 1)
+        self.a = Base_model_CRR(0, -2 / 5, 1 / 5, 1, 150, 150, 1)
         self.settext_lineedit_a_b_r_B0_S0_K_N()
 
     def show_dialog(self):
@@ -141,7 +153,7 @@ class Start_Form(QMainWindow, sw.Ui_StartWindow):
         N, ok = self.input_dialog_get_N()
         if not ok:
             return
-        self.a = Model_CRR(r, a, b, B0, S0, K, N)
+        self.a = Base_model_CRR(r, a, b, B0, S0, K, N)
         self.settext_lineedit_a_b_r_B0_S0_K_N()
 
     def input_dialog_get_r_a_b(self, x: str, l=-1.0, h=1.0):
@@ -211,21 +223,21 @@ class Start_Form(QMainWindow, sw.Ui_StartWindow):
         B0, ok = self.input_dialog_get_B0()
         if not ok:
             return
-        self.a._B0 = B0
+        self.a._B0 = Decimal(B0)
         self.lineEdit_4.setText(str(B0))
 
     def button_change_S0(self):
         S0, ok = self.input_dialog_get_S0_K_b("S0")
         if not ok:
             return
-        self.a._S0 = S0
+        self.a._S0 = Decimal(S0)
         self.lineEdit_5.setText(str(S0))
 
     def button_change_K(self):
         K, ok = self.input_dialog_get_S0_K_b("K")
         if not ok:
             return
-        self.a._K = K
+        self.a._K = Decimal(K)
         self.lineEdit_6.setText(str(K))
 
     def button_change_N(self):
@@ -245,10 +257,10 @@ class Start_Form(QMainWindow, sw.Ui_StartWindow):
 
 
 class Main_Form(QMainWindow, mw.Ui_MainWindow):
-    def __init__(self, model_CRR):
+    def __init__(self, base_model_CRR):
         super().__init__()
         self.setupUi(self)
-        self.a = model_CRR
+        self.a = Model_CRR(*base_model_CRR.get_r_a_b_B0_S0_K_N())
         self.settext_lineedit_a_b_r_B0_S0_K_N_CN_K0()
         self.update_beta_gamma()
         self.stack_str = list()
@@ -342,10 +354,11 @@ class Main_Form(QMainWindow, mw.Ui_MainWindow):
         self.stack_dict[save_str] = [a._n, a._beta_n, a._gamma_n, a._Sn_prev]
 
     def button_calc_capital(self):
+        a = self.a
         QMessageBox.question(
             self,
             "Исполнение",
-            "Выплата равна: " + str(round(float(self.a.calc_capital()), 4)),
+            "Выплата равна: " + str(round(float(a._fun(a._Sn_prev)), 4)),
             QMessageBox.Ok
         )
 

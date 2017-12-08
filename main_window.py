@@ -186,7 +186,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Европейский оупцион"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Европейский опцион"))
         self.label_8.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\"><span style=\" font-size:14pt;\">Акция</span></p></body></html>"))
         self.label_9.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\">Хеджирующая стратегия</p></body></html>"))
         self.label_11.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\"><span style=\" font-size:14pt;\">Шаг</span></p></body></html>"))
@@ -197,7 +197,7 @@ class Ui_MainWindow(object):
         self.lineEdit_14.setText(_translate("MainWindow", ","))
         self.pushButton_3.setText(_translate("MainWindow", "Вернуться к шагу"))
         self.pushButton_4.setText(_translate("MainWindow", "Предъявить к исполнению"))
-        self.label_10.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\">Справедливая цена оупциона</p></body></html>"))
+        self.label_10.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\">Справедливая цена опциона</p></body></html>"))
         self.label_12.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\">k<span style=\" vertical-align:sub;\">0</span></p></body></html>"))
         self.label_13.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\">Дано</p></body></html>"))
         self.label_7.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\"><span style=\" font-size:14pt;\">N</span></p></body></html>"))
@@ -208,4 +208,3 @@ class Ui_MainWindow(object):
         self.label_3.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\"><span style=\" font-size:14pt;\">r</span></p></body></html>"))
         self.label_4.setText(_translate("MainWindow", "<html><head/><body><p align=\"center\">B<span style=\" vertical-align:sub;\">0</span></p></body></html>"))
         self.pushButton_5.setText(_translate("MainWindow", "Расчитать новую задачу"))
-
