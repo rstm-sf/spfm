@@ -292,7 +292,8 @@ class Main_Form(QMainWindow, mw.Ui_MainWindow):
 
     def update_n_beta_gamma_S_prev_line_edit(self):
         a = self.a
-        self.lineEdit_8.setText(str(round(float(a._Sn_prev), 4)))
+        self.lineEdit_8.setText(
+            str(float(a._Sn_prev.quantize(Decimal('0.0001')))))
         self.lineEdit_11.setText(str(a._n - 1))
         self.lineEdit_10.setText(str(round(a._beta_n, 4)))
         self.lineEdit_9.setText(str(round(a._gamma_n, 4)))
@@ -307,7 +308,7 @@ class Main_Form(QMainWindow, mw.Ui_MainWindow):
         self.lineEdit_6.setText(str(a._K))
         self.lineEdit_7.setText(str(a._N))
         self.lineEdit_8.setText(str(a._Sn_prev))
-        self.lineEdit_15.setText(str(round(float(a._CN), 4)))
+        self.lineEdit_15.setText(str(float(a._CN.quantize(Decimal('0.0001')))))
         self.lineEdit_16.setText(str(a._K0))
 
     def check_start(self):
@@ -355,6 +356,11 @@ class Main_Form(QMainWindow, mw.Ui_MainWindow):
         self.stack_str.append(save_str)
         self.stack_dict[save_str] = [a._n, a._beta_n, a._gamma_n, a._Sn_prev]
 
+    def get_k_history(self, k):
+        if k == 0:
+            return self.a._n, self.a._beta_n, self.a._gamma_n, self.a._Sn_prev
+        return self.stack_dict.get(str(k - 1))
+
     def button_new_task(self):
         self.start_window = Start_Form()
         self.close()
@@ -362,32 +368,33 @@ class Main_Form(QMainWindow, mw.Ui_MainWindow):
 
     def calc_debt_to_bank(self):
         a = self.a
-        k, beta_k, gamma_k, Sk_prev = self.stack_dict.get(str(a._n - 2))
+        k, beta_k, gamma_k, Sk_prev = self.get_k_history(a._n - 1)
         debt = -(a._B0 * Decimal(math.pow(1.0 + a._r, k) * beta_k))
         return debt
 
     def calc_Sk_gamma_k(self):
         a = self.a
-        k, beta_k, gamma_k, Sk_prev = self.stack_dict.get(str(a._n - 2))
+        k, beta_k, gamma_k, Sk_prev = self.get_k_history(a._n - 1)
         return a._Sn_prev * Decimal(gamma_k)
 
     def calc_payment_to_buyer(self):
         return self.calc_Sk_gamma_k() - self.calc_debt_to_bank()
 
     def button_calc_debt_to_bank(self):
+        debt = self.calc_debt_to_bank().quantize(Decimal('0.0001'))
         QMessageBox.question(
             self,
             "Выписка",
-            "Долг банку: " + str(round(float(self.calc_debt_to_bank()), 4)),
+            "Долг банку: " + str(float(debt)),
             QMessageBox.Ok
         )
 
     def button_calc_payment_to_buyer(self):
-        payment = float(self.calc_payment_to_buyer())
+        payment = self.calc_payment_to_buyer().quantize(Decimal('0.0001'))
         QMessageBox.question(
             self,
             "Выписка",
-            "Выплата равна: " + str(abs(round(payment, 4))),
+            "Выплата равна: " + str(float(payment)),
             QMessageBox.Ok
         )
 
@@ -404,9 +411,10 @@ class End_Form(QMainWindow, ew.Ui_EndWindow):
     def __init__(self, fun, debt, payment):
         super().__init__()
         self.setupUi(self)
-        self.lineEdit.setText(str(round(float(fun), 4)))
-        self.lineEdit_2.setText(str(round(float(debt), 4)))
-        self.lineEdit_3.setText(str(abs(round(float(payment), 4))))
+        self.lineEdit.setText(str(float(fun.quantize(Decimal('0.0001')))))
+        self.lineEdit_2.setText(str(float(debt.quantize(Decimal('0.0001')))))
+        self.lineEdit_3.setText(
+            str(float(payment.quantize(Decimal('0.0001')))))
         self.pushButton.clicked.connect(self.button_ok)
 
     def button_ok(self):
