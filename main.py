@@ -2,6 +2,7 @@ import math
 import sys
 
 
+import end_window as ew
 import main_window as mw
 import start_window as sw
 
@@ -263,8 +264,10 @@ class Main_Form(QMainWindow, mw.Ui_MainWindow):
         self._is_connect_up_down = False
         self.check_start()
         self.pushButton_3.clicked.connect(self.get_choice_history)
-        self.pushButton_4.clicked.connect(self.button_calc_capital)
+        self.pushButton_4.clicked.connect(self.lead_to_execution)
         self.pushButton_5.clicked.connect(self.button_new_task)
+        self.pushButton_6.clicked.connect(self.button_calc_debt_to_bank)
+        self.pushButton_7.clicked.connect(self.button_calc_payment_to_buyer)
 
     def button_up(self):
         a = self.a
@@ -309,7 +312,7 @@ class Main_Form(QMainWindow, mw.Ui_MainWindow):
 
     def check_start(self):
         if self.a._n <= self.a._N and self.a._K0 <= self.a._N and (
-            abs(self.a._beta_n) >= float(1e-31) or \
+            abs(self.a._beta_n) >= float(1e-31) or
             abs(self.a._gamma_n) >= float(1e-31)
         ):
             self.button_up_down_connect()
@@ -318,6 +321,7 @@ class Main_Form(QMainWindow, mw.Ui_MainWindow):
         if self.a._n > self.a._N or abs(self.a._beta_n) < float(1e-31) and \
                 abs(self.a._gamma_n) < float(1e-31):
             self.button_up_down_disconnect()
+            self.lead_to_execution()
 
     def button_up_down_connect(self):
         if not self._is_connect_up_down:
@@ -351,19 +355,62 @@ class Main_Form(QMainWindow, mw.Ui_MainWindow):
         self.stack_str.append(save_str)
         self.stack_dict[save_str] = [a._n, a._beta_n, a._gamma_n, a._Sn_prev]
 
-    def button_calc_capital(self):
-        a = self.a
-        QMessageBox.question(
-            self,
-            "Исполнение",
-            "Выплата равна: " + str(round(float(a._fun(a._Sn_prev)), 4)),
-            QMessageBox.Ok
-        )
-
     def button_new_task(self):
         self.start_window = Start_Form()
         self.close()
         self.start_window.show()
+
+    def calc_debt_to_bank(self):
+        a = self.a
+        k, beta_k, gamma_k, Sk_prev = self.stack_dict.get(str(a._n - 2))
+        debt = -(a._B0 * Decimal(math.pow(1.0 + a._r, k) * beta_k))
+        return debt
+
+    def calc_Sk_gamma_k(self):
+        a = self.a
+        k, beta_k, gamma_k, Sk_prev = self.stack_dict.get(str(a._n - 2))
+        return a._Sn_prev * Decimal(gamma_k)
+
+    def calc_payment_to_buyer(self):
+        return self.calc_Sk_gamma_k() - self.calc_debt_to_bank()
+
+    def button_calc_debt_to_bank(self):
+        QMessageBox.question(
+            self,
+            "Выписка",
+            "Долг банку: " + str(round(float(self.calc_debt_to_bank()), 4)),
+            QMessageBox.Ok
+        )
+
+    def button_calc_payment_to_buyer(self):
+        payment = float(self.calc_payment_to_buyer())
+        QMessageBox.question(
+            self,
+            "Выписка",
+            "Выплата равна: " + str(abs(round(payment, 4))),
+            QMessageBox.Ok
+        )
+
+    def lead_to_execution(self):
+        self.end_form = End_Form(
+            self.a._fun(self.a._Sn_prev),
+            self.calc_debt_to_bank(),
+            self.calc_payment_to_buyer()
+        )
+        self.end_form.show()
+
+
+class End_Form(QMainWindow, ew.Ui_EndWindow):
+    def __init__(self, fun, debt, payment):
+        super().__init__()
+        self.setupUi(self)
+        self.lineEdit.setText(str(round(float(fun), 4)))
+        self.lineEdit_2.setText(str(round(float(debt), 4)))
+        self.lineEdit_3.setText(str(abs(round(float(payment), 4))))
+        self.pushButton.clicked.connect(self.button_ok)
+
+    def button_ok(self):
+        self.close()
 
 
 def main():
